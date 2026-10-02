@@ -2,7 +2,8 @@ import { SEED_ROWS } from './seed'
 import type { EntryRow } from './types'
 
 // 本地持久化：数据放在 localStorage 里，刷新、关掉再打开都还在。
-const STORAGE_KEY = 'forest-fire-patrol:entries'
+// v2：扑火队伍按林场建权限边界、火情报告新增待出警清单，老结构缓存直接作废重播种子。
+const STORAGE_KEY = 'forest-fire-patrol:entries:v2'
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -38,6 +39,13 @@ export function allRows(): Record<string, EntryRow[]> {
 
 export function listRows(key: string): EntryRow[] {
   return allRows()[key] ?? []
+}
+
+// 另一台终端（浏览器标签页）可能已经写过 localStorage：写之前强制重读，
+// 避免拿本标签页的旧缓存覆盖别人的新数据（模拟乐观并发控制里的版本校验）。
+export function refreshRows(): Record<string, EntryRow[]> {
+  cache = readStorage()
+  return cache
 }
 
 export function saveRows(key: string, rows: EntryRow[]): void {

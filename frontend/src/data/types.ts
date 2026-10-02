@@ -30,6 +30,14 @@ export type PageResult = {
 export type ActionResult = {
   ok: boolean
   message: string
+  // 命中幂等占坑：另一终端已落库，本次提交未重复写数据
+  duplicated?: boolean
+}
+
+// 值班身份：动作入口必须带上，数据层据此做林场权限边界校验
+export type OperatorContext = {
+  operator: string
+  farm: string
 }
 
 export type OverviewResult = {

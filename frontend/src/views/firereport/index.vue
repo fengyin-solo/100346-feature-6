@@ -82,10 +82,9 @@ import {
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('firereport')
-const columns = ["报告编号", "起火地点", "起火时间", "火势等级", "过火面积", "扑救情况", "报告人", "报告状态"]
+const columns = ["报告编号", "起火地点", "起火时间", "火势等级", "过火面积", "扑救情况", "报告人", "关联队伍编号", "报告状态"]
 const actions = ["核实火情", "出动扑救", "确认误报"]
-const statuses = ["待核实", "已确认", "已出警", "已扑灭", "误报"]
-const stats = [{"label": "今日报告数", "value": 0}, {"label": "已确认火情", "value": 0}, {"label": "扑救中火情", "value": 0}]
+const statuses = ["待核实", "已确认", "待出警", "已出警", "已扑灭", "误报"]
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
@@ -98,6 +97,11 @@ const statusSummary = computed(() =>
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
 )
+const stats = computed(() => [
+  { label: "今日报告数", value: rows.value.length },
+  { label: "待出警清单", value: rows.value.filter((row) => String(row.status) === '待出警').length },
+  { label: "已出警/扑救中", value: rows.value.filter((row) => ['待出警', '已出警'].includes(String(row.status))).length },
+])
 
 function resetFilters() {
   filters.value = {}
