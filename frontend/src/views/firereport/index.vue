@@ -24,6 +24,28 @@
       </span>
     </p>
 
+    <section class="sub-panel">
+      <h3>待出警清单（{{ pendingRows.length }}）</h3>
+      <p class="page-desc">
+        汇总各入口已确认、等待队伍出警的火情报告；扑火队伍「下达出动」确认后会从那边一并新增一份到这里。
+      </p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th v-for="column in pendingColumns" :key="column">{{ column }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in pendingRows" :key="`pending-${String(row.id)}`">
+            <td v-for="column in pendingColumns" :key="column">{{ row[column] ?? '—' }}</td>
+          </tr>
+          <tr v-if="!pendingRows.length">
+            <td :colspan="pendingColumns.length" class="empty-state">暂无待出警火情</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -76,6 +98,7 @@ import { computed, onMounted, ref } from 'vue'
 import {
   downloadEntries,
   listEntries,
+  listPendingDispatchReports,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
@@ -83,11 +106,14 @@ import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('firereport')
 const columns = ["报告编号", "起火地点", "起火时间", "火势等级", "过火面积", "扑救情况", "报告人", "报告状态"]
+// 待出警清单额外展示跨入口联动与归属信息，不改变主表字段。
+const pendingColumns = ["报告编号", "起火地点", "起火时间", "火势等级", "报告人", "接令林场", "关联队伍", "来源入口"]
 const actions = ["核实火情", "出动扑救", "确认误报"]
 const statuses = ["待核实", "已确认", "已出警", "已扑灭", "误报"]
 const stats = [{"label": "今日报告数", "value": 0}, {"label": "已确认火情", "value": 0}, {"label": "扑救中火情", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const pendingRows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +154,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    pendingRows.value = listPendingDispatchReports()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '火情报告列表读取失败'
   }

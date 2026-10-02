@@ -30,6 +30,8 @@ export type PageResult = {
 export type ActionResult = {
   ok: boolean
   message: string
+  // 多终端重复提交时，服务层识别为同一条命令并跳过落库：true 表示本次没有产生新写入。
+  duplicated?: boolean
 }
 
 export type OverviewResult = {
